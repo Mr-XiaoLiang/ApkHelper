@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <Window
     x:Class="ApkHelper.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,65 +9,71 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Window.SystemBackdrop>
-        <DesktopAcrylicBackdrop/>
+        <DesktopAcrylicBackdrop />
     </Window.SystemBackdrop>
     <RelativePanel>
-        <ProgressBar 
-            x:Name="progressBar"
-            RelativePanel.AlignBottomWithPanel="True" 
-            RelativePanel.AlignRightWithPanel="True" 
-            RelativePanel.AlignLeftWithPanel="True" 
-            IsIndeterminate="False" 
-            ShowPaused="False" 
-            ShowError="False" 
+        <ProgressBar
+            x:Name="ProgressBar"
+            RelativePanel.AlignBottomWithPanel="True"
+            RelativePanel.AlignRightWithPanel="True"
+            RelativePanel.AlignLeftWithPanel="True"
+            IsIndeterminate="False"
+            ShowPaused="False"
+            ShowError="False"
             Height="12"
-            Visibility="Collapsed"/>
+            Visibility="Collapsed" />
 
-        <ScrollViewer
-            ZoomMode="Enabled" 
+        <ListView
+            x:Name="LogView"
             IsTabStop="True"
-            VerticalAlignment="Top" 
+            VerticalAlignment="Top"
             HorizontalAlignment="Left"
-            HorizontalScrollMode="Auto" 
-            HorizontalScrollBarVisibility="Auto"
-            VerticalScrollMode="Auto" 
-            VerticalScrollBarVisibility="Auto"
-            RelativePanel.AlignBottomWithPanel="True" 
-            RelativePanel.AlignRightWithPanel="True" 
-            RelativePanel.AlignLeftWithPanel="True" 
+            SelectionMode="None"
+            IsItemClickEnabled="False"
+            ItemsSource="{x:Bind LogModel.LogLines}"
+            RelativePanel.AlignBottomWithPanel="True"
+            RelativePanel.AlignRightWithPanel="True"
+            RelativePanel.AlignLeftWithPanel="True"
             RelativePanel.AlignTopWithPanel="True"
-            Margin="0,0,0,12">
-            <TextBlock
-                x:Name="logView"
-                Margin="0,48,0,12"/>
-        </ScrollViewer>
+            Margin="12,0,12,12">
+            <ListView.ItemTemplate>
+                <DataTemplate x:Key="LogListViewTemplate" x:DataType="local:LogLine">
+                    <TextBlock
+                        Text="{x:Bind Content}"
+                        x:Phase="1"
+                        Margin="0,5,0,5"
+                        Foreground="{x:Bind Color}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
 
-        <Button 
-            AllowDrop="True" 
-            DragOver="OnDragOver" 
+        <Button
+            AllowDrop="True"
+            DragOver="OnDragOver"
             Drop="OnDropAsync"
-            x:Name="dragButton"
+            x:Name="DragButton"
             RelativePanel.AlignHorizontalCenterWithPanel="True"
             RelativePanel.AlignVerticalCenterWithPanel="True">
-            <StackPanel 
+            <StackPanel
                 Padding="48"
                 Orientation="Vertical"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center">
-                <FontIcon 
-                    x:Name="addIconView"
+                <FontIcon
+                    x:Name="AddIconView"
                     Glyph="&#xF8AA;"
                     Width="48"
                     Height="48"
-                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
 
-                <TextBlock 
-                    x:Name="hintTextView"
+                <TextBlock
+                    x:Name="HintTextView"
                     Text="拖拽 APK 文件到窗口中来安装"
-                    Style="{ThemeResource BodyStrongTextBlockStyle}" 
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
             </StackPanel>
         </Button>
 
     </RelativePanel>
+
 </Window>

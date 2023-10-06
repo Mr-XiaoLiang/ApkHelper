@@ -17,12 +17,12 @@ namespace ApkHelper
         private event CmdOutputCallback CmdOutput;
         private event CmdErrorCallback CmdError;
 
-        private Process process = new();
+        private Process _process = new();
 
-        private readonly string commandInfo;
+        private readonly string _commandInfo;
 
         private CommandLineHelper(string cmd) {
-            this.commandInfo = cmd;
+            this._commandInfo = cmd;
         }
 
         public static CommandLineHelper Create(params string[] commands)
@@ -45,9 +45,9 @@ namespace ApkHelper
             }
         }
 
-        public void Send()
+        public CommandLineHelper Send()
         {
-            var cmd = commandInfo;
+            var cmd = _commandInfo;
             var path = Path.Combine(Environment.SystemDirectory, @"cmd.exe");
 
             if (!cmd.StartsWith(@"/"))
@@ -66,19 +66,20 @@ namespace ApkHelper
                 WindowStyle = ProcessWindowStyle.Hidden
             };
 
-            process.StartInfo = startInfo;
-            process.EnableRaisingEvents = true;
-            process.ErrorDataReceived += OnCmdError;
-            process.OutputDataReceived += OnCmdOutput;
-            process.Exited += OnCmdExited;
-            process.Start();
-            process.BeginErrorReadLine();
-            process.BeginOutputReadLine();
+            _process.StartInfo = startInfo;
+            _process.EnableRaisingEvents = true;
+            _process.ErrorDataReceived += OnCmdError;
+            _process.OutputDataReceived += OnCmdOutput;
+            _process.Exited += OnCmdExited;
+            _process.Start();
+            _process.BeginErrorReadLine();
+            _process.BeginOutputReadLine();
+            return this;
         }
 
         public CommandLineHelper Write(string data)
         {
-            process.StandardInput.WriteLine(data);
+            _process.StandardInput.WriteLine(data);
             return this;
         }
 
@@ -100,17 +101,17 @@ namespace ApkHelper
             return this;
         }
 
-        public void OnCmdError(object sender, DataReceivedEventArgs e)
+        private void OnCmdError(object sender, DataReceivedEventArgs e)
         {
             CmdError?.Invoke(e.Data);
         }
 
-        public void OnCmdOutput(object sender, DataReceivedEventArgs e)
+        private void OnCmdOutput(object sender, DataReceivedEventArgs e)
         {
             CmdOutput?.Invoke(e.Data);
         }
 
-        public void OnCmdExited(object sender, EventArgs e)
+        private void OnCmdExited(object sender, EventArgs e)
         {
             CmdExit?.Invoke();
         }

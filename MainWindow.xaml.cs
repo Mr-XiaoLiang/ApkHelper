@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics;
+using Windows.Storage;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
 using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -19,12 +21,13 @@ namespace ApkHelper
     public sealed partial class MainWindow : Window
     {
 
-        private List<string> PendingApkList = new();
-        private int InstallCount = 0;
+        private readonly List<string> _pendingApkList = new();
+        private int _installCount = 0;
+        public readonly LogViewModel LogModel = new();
 
         public MainWindow()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             InitWindow();
             UpdateStateToIdel();
         }
@@ -50,7 +53,7 @@ namespace ApkHelper
             }
             var windowLeft = (screenWidth - windowWidth) / 2;
             var windowTop = (screenHeight - windowHeight) / 2;
-            window.MoveAndResize(new Windows.Graphics.RectInt32(windowLeft, windowTop, windowWidth, windowHeight));
+            window.MoveAndResize(new RectInt32(windowLeft, windowTop, windowWidth, windowHeight));
         }
 
         private AppWindow GetAppWindow()
@@ -76,7 +79,7 @@ namespace ApkHelper
                 return;
             }
             apkList.ForEach(apk =>
-                PendingApkList.Add(apk.Path)
+                _pendingApkList.Add(apk.Path)
             ) ;
             Install();
         }
@@ -99,7 +102,7 @@ namespace ApkHelper
             foreach (var item in items)
             {
                 var attributes = item.Attributes;
-                if (HasAttributes(attributes, Windows.Storage.FileAttributes.Directory) || HasAttributes(attributes, Windows.Storage.FileAttributes.LocallyIncomplete))
+                if (HasAttributes(attributes, FileAttributes.Directory) || HasAttributes(attributes, FileAttributes.LocallyIncomplete))
                 {
                     continue;
                 }
@@ -114,39 +117,82 @@ namespace ApkHelper
 
         private async void Install()
         {
-            if (PendingApkList.Count < 1)
+            if (_pendingApkList.Count < 1)
             {
                 return;
             }
-            var apkPath = PendingApkList[0];
-            PendingApkList.RemoveAt(0);
-            InstallCount ++;
-            UpdateStateToLoading(InstallCount, InstallCount + PendingApkList.Count);
+            var apkPath = _pendingApkList[0];
+            _pendingApkList.RemoveAt(0);
+            _installCount ++;
+            UpdateStateToLoading(_installCount, _installCount + _pendingApkList.Count);
 
-
+            SendInstallCommand(_installCount, apkPath);
         }
 
-        private Boolean HasAttributes(Windows.Storage.FileAttributes attributes, Windows.Storage.FileAttributes flag) => (attributes & flag) == flag;
+        private async void SendInstallCommand(int taskId, string apkPath)
+        {
+            CommandLineHelper.Create("adb", "install", apkPath)
+                .OnOutput(value => { LogInfo(taskId, value); })
+                .OnError(value => { LogError(taskId, value); })
+                .OnExit(() => { LogInfo(taskId, "结束"); })
+                .Send();
+        }
+        
+        private async void SendWsaCommand()
+        {
+            var wskCommand = "";
+            CommandLineHelper.Create("adb", "install", wskCommand)
+                .OnOutput(value => { LogInfo(0, value); })
+                .OnError(value => { LogError(0, value); })
+                .OnExit(() => { LogInfo(0, "结束"); })
+                .Send();
+        }
+
+        private StringBuilder LogContent(int taskId, string[] value)
+        {
+            var builder = new StringBuilder();
+            builder.Append("task:").Append(taskId.ToString()).Append("->");
+            foreach (var s in value)
+            {
+                builder.Append(s);
+                builder.Append(' ');
+            }
+            return builder;
+        }
+        
+        private void LogInfo(int taskId, params string[] value)
+        {
+            var builder = LogContent(taskId, value);
+            LogModel.LogLines.Add(LogLine.Info(builder.ToString()));
+        }
+        
+        private void LogError(int taskId, params string[] value)
+        {
+            var builder = LogContent(taskId, value);
+            LogModel.LogLines.Add(LogLine.Error(builder.ToString()));
+        }
+
+        private Boolean HasAttributes(FileAttributes attributes, FileAttributes flag) => (attributes & flag) == flag;
 
         private void UpdateStateToIdel()
         {
-            progressBar.Visibility = Visibility.Collapsed;
-            progressBar.IsIndeterminate = false;
-            hintTextView.Text = "拖拽 APK 文件到窗口中来安装";
+            ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressBar.IsIndeterminate = false;
+            HintTextView.Text = "拖拽 APK 文件到窗口中来安装";
         }
 
         private void UpdateStateToReady()
         {
-            progressBar.Visibility = Visibility.Collapsed;
-            progressBar.IsIndeterminate = false;
-            hintTextView.Text = "松手释放拖拽的文件来安装";
+            ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressBar.IsIndeterminate = false;
+            HintTextView.Text = "松手释放拖拽的文件来安装";
         }
 
         private void UpdateStateToLoading(int position, int all)
         {
-            progressBar.Visibility = Visibility.Collapsed;
-            progressBar.IsIndeterminate = false;
-            hintTextView.Text = "正在安装 " + (position + 1) + "/" + all;
+            ProgressBar.Visibility = Visibility.Collapsed;
+            ProgressBar.IsIndeterminate = false;
+            HintTextView.Text = "正在安装 " + (position + 1) + "/" + all;
         }
 
     }
