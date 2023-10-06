@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="ApkHelper.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ApkHelper"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Window.SystemBackdrop>
+        <DesktopAcrylicBackdrop/>
+    </Window.SystemBackdrop>
+    <RelativePanel>
+        <ProgressBar 
+            x:Name="progressBar"
+            RelativePanel.AlignBottomWithPanel="True" 
+            RelativePanel.AlignRightWithPanel="True" 
+            RelativePanel.AlignLeftWithPanel="True" 
+            IsIndeterminate="False" 
+            ShowPaused="False" 
+            ShowError="False" 
+            Height="12"
+            Visibility="Collapsed"/>
+
+        <ScrollViewer
+            ZoomMode="Enabled" 
+            IsTabStop="True"
+            VerticalAlignment="Top" 
+            HorizontalAlignment="Left"
+            HorizontalScrollMode="Auto" 
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto" 
+            VerticalScrollBarVisibility="Auto"
+            RelativePanel.AlignBottomWithPanel="True" 
+            RelativePanel.AlignRightWithPanel="True" 
+            RelativePanel.AlignLeftWithPanel="True" 
+            RelativePanel.AlignTopWithPanel="True"
+            Margin="0,0,0,12">
+            <TextBlock
+                x:Name="logView"
+                Margin="0,48,0,12"/>
+        </ScrollViewer>
+
+        <Button 
+            AllowDrop="True" 
+            DragOver="OnDragOver" 
+            Drop="OnDropAsync"
+            x:Name="dragButton"
+            RelativePanel.AlignHorizontalCenterWithPanel="True"
+            RelativePanel.AlignVerticalCenterWithPanel="True">
+            <StackPanel 
+                Padding="48"
+                Orientation="Vertical"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center">
+                <FontIcon 
+                    x:Name="addIconView"
+                    Glyph="&#xF8AA;"
+                    Width="48"
+                    Height="48"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+
+                <TextBlock 
+                    x:Name="hintTextView"
+                    Text="拖拽 APK 文件到窗口中来安装"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}" 
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+            </StackPanel>
+        </Button>
+
+    </RelativePanel>
+</Window>

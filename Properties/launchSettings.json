@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ApkHelper (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ApkHelper (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
