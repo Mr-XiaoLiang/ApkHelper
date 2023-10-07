@@ -30,6 +30,7 @@ namespace ApkHelper
             InitializeComponent();
             InitWindow();
             UpdateStateToIdel();
+            LogInfo(0, "准备就绪");
         }
 
         private void InitWindow()
@@ -151,7 +152,11 @@ namespace ApkHelper
         private StringBuilder LogContent(int taskId, string[] value)
         {
             var builder = new StringBuilder();
-            builder.Append("task:").Append(taskId.ToString()).Append("->");
+            builder.Append(DateTime.Now.ToString("T")).Append(" -> ");
+            if (taskId != 0)
+            {
+                builder.Append("task:").Append(taskId.ToString()).Append(' ');
+            }
             foreach (var s in value)
             {
                 builder.Append(s);
