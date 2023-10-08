@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Storage;
-using Windows.UI.Core;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -32,12 +31,13 @@ namespace ApkHelper
             InitializeComponent();
             InitWindow();
             InitWsaHelper();
-            UpdateStateToIdel();
+            UpdateStateToIdle();
             LogInfo("", "准备就绪");
         }
 
         private void InitWindow()
         {
+            LogErrorButton.IsChecked = LogLine.ShowError;
             var window = GetAppWindow();
             if (window == null)
             {
@@ -107,7 +107,7 @@ namespace ApkHelper
             if (apkList.Count < 1)
             {
                 // 数量不对，那么放弃
-                UpdateStateToIdel();
+                UpdateStateToIdle();
                 return;
             }
 
@@ -117,7 +117,17 @@ namespace ApkHelper
             Install();
         }
 
-        private async Task<List<IStorageItem>> GetDragItemsAsync(DragEventArgs e)
+        private void LogErrorChecked(object sender, RoutedEventArgs e)
+        {
+            LogLine.ShowError = true;
+        }
+
+        private void LogErrorUnchecked(object sender, RoutedEventArgs e)
+        {
+            LogLine.ShowError = false;
+        }
+        
+        private static async Task<List<IStorageItem>> GetDragItemsAsync(DragEventArgs e)
         {
             var apkList = new List<IStorageItem>();
             if (!e.DataView.Contains(StandardDataFormats.StorageItems))
@@ -156,7 +166,8 @@ namespace ApkHelper
         {
             if (_pendingApkList.Count < 1)
             {
-                UpdateStateToIdel();
+                _installCount = 0;
+                UpdateStateToIdle();
                 return;
             }
 
@@ -168,7 +179,7 @@ namespace ApkHelper
             _wsaHelper.SendInstallCommand(_installCount.ToString(), apkPath, Install);
         }
 
-        private StringBuilder LogContent(string tag, string value)
+        private static StringBuilder LogContent(string tag, string value)
         {
             var builder = new StringBuilder();
             builder.Append(DateTime.Now.ToString("T")).Append(" -> ");
@@ -186,41 +197,63 @@ namespace ApkHelper
         private void LogInfo(string tag, string value)
         {
             var builder = LogContent(tag, value);
-            RunUI(() => { LogModel.LogLines.Add(LogLine.Info(builder.ToString())); });
+            RunUi(() =>
+            {
+                var logLine = LogLine.Info(builder.ToString());
+                LogModel.LogLines.Add(logLine);
+                LogView.ScrollIntoView(logLine);
+            });
         }
 
         private void LogError(string tag, string value)
         {
             var builder = LogContent(tag, value);
-            RunUI(() => { LogModel.LogLines.Add(LogLine.Error(builder.ToString())); });
+            RunUi(() =>
+            {
+                var logLine = LogLine.Error(builder.ToString());
+                LogModel.LogLines.Add(logLine);
+                LogView.ScrollIntoView(logLine);
+            });
         }
 
-        private void RunUI(DispatcherQueueHandler agileCallback)
+        private void RunUi(DispatcherQueueHandler agileCallback)
         {
             DispatcherQueue.TryEnqueue(agileCallback);
         }
 
-        private Boolean HasAttributes(FileAttributes attributes, FileAttributes flag) => (attributes & flag) == flag;
+        private static bool HasAttributes(FileAttributes attributes, FileAttributes flag) => (attributes & flag) == flag;
 
-        private void UpdateStateToIdel()
+        private void UpdateStateToIdle()
         {
-            ProgressBar.Visibility = Visibility.Collapsed;
-            ProgressBar.IsIndeterminate = false;
-            HintTextView.Text = "拖拽 APK 文件到窗口中来安装";
+            RunUi(() =>
+            {
+                ProgressBar.Visibility = Visibility.Collapsed;
+                ProgressBar.IsIndeterminate = false;
+                HintTextView.Text = "拖拽 APK 文件到窗口中来安装";
+            });
+            
         }
 
         private void UpdateStateToReady()
         {
-            ProgressBar.Visibility = Visibility.Collapsed;
-            ProgressBar.IsIndeterminate = false;
-            HintTextView.Text = "松手释放拖拽的文件来安装";
+            RunUi(() =>
+            {
+                ProgressBar.Visibility = Visibility.Collapsed;
+                ProgressBar.IsIndeterminate = false;
+                HintTextView.Text = "松手释放拖拽的文件来安装";
+            });
+            
         }
 
         private void UpdateStateToLoading(int position, int all)
         {
-            ProgressBar.Visibility = Visibility.Collapsed;
-            ProgressBar.IsIndeterminate = false;
-            HintTextView.Text = "正在安装 " + (position + 1) + "/" + all;
+            RunUi(() =>
+            {
+                ProgressBar.Visibility = Visibility.Collapsed;
+                ProgressBar.IsIndeterminate = false;
+                HintTextView.Text = "正在安装 " + (position) + "/" + all;
+            });
+            
         }
     }
 }

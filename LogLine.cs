@@ -7,6 +7,9 @@ namespace ApkHelper
 {
     public class LogLine
     {
+
+        public static bool ShowError = false;
+        
         public string Content { get; private set; }
         public Brush Color { get; private set; }
 

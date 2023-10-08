@@ -30,6 +30,7 @@
             HorizontalAlignment="Left"
             SelectionMode="None"
             IsItemClickEnabled="False"
+
             ItemsSource="{x:Bind LogModel.LogLines}"
             RelativePanel.AlignBottomWithPanel="True"
             RelativePanel.AlignRightWithPanel="True"
@@ -67,12 +68,22 @@
                     Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
 
                 <TextBlock
+                    TextWrapping="Wrap"
                     x:Name="HintTextView"
                     Text="拖拽 APK 文件到窗口中来安装"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
             </StackPanel>
         </Button>
+        
+        <ToggleButton 
+            Content="Log Error" 
+            x:Name="LogErrorButton"
+            RelativePanel.AlignRightWithPanel="True"
+            Margin="8"
+            RelativePanel.Above="ProgressBar"
+            Checked="LogErrorChecked" 
+            Unchecked="LogErrorUnchecked" />
 
     </RelativePanel>
 

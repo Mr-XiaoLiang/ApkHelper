@@ -96,12 +96,22 @@ namespace ApkHelper
 
         private void OnCmdError(object sender, DataReceivedEventArgs e)
         {
-            CmdError?.Invoke(e.Data);
+            var data = e.Data;
+            if (data == null)
+            {
+                return;
+            }
+            CmdError?.Invoke(data);
         }
 
         private void OnCmdOutput(object sender, DataReceivedEventArgs e)
         {
-            CmdOutput?.Invoke(e.Data);
+            var data = e.Data;
+            if (data == null)
+            {
+                return;
+            }
+            CmdOutput?.Invoke(data);
         }
 
         private void OnCmdExited(object sender, EventArgs e)
