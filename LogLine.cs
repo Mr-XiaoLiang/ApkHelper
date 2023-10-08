@@ -18,11 +18,11 @@ namespace ApkHelper
 
         public static LogLine Info(string content)
         {
-            var theme = Application.Current.RequestedTheme;
-            var color = Colors.White;
-            if (theme == ApplicationTheme.Light)
+            var theme = App.CurrentTheme();
+            var color = Colors.Black;
+            if (theme == ElementTheme.Dark)
             {
-                color = Colors.Black;
+                color = Colors.White;
             }
 
             return new LogLine(content, new SolidColorBrush(color));
@@ -30,11 +30,11 @@ namespace ApkHelper
 
         public static LogLine Error(string content)
         {
-            var theme = Application.Current.RequestedTheme;
-            var color = Colors.DarkRed;
-            if (theme == ApplicationTheme.Light)
+            var theme = App.CurrentTheme();
+            var color = Colors.Red;
+            if (theme == ElementTheme.Dark)
             {
-                color = Colors.Red;
+                color = Colors.DarkRed;
             }
 
             return new LogLine(content, new SolidColorBrush(color));

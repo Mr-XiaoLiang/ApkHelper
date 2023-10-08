@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Storage;
+using Windows.UI.Core;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using WinRT.Interop;
@@ -20,17 +22,18 @@ namespace ApkHelper
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-
         private readonly List<string> _pendingApkList = new();
         private int _installCount = 0;
         public readonly LogViewModel LogModel = new();
+        private WsaHelper _wsaHelper;
 
         public MainWindow()
         {
             InitializeComponent();
             InitWindow();
+            InitWsaHelper();
             UpdateStateToIdel();
-            LogInfo(0, "准备就绪");
+            LogInfo("", "准备就绪");
         }
 
         private void InitWindow()
@@ -40,6 +43,7 @@ namespace ApkHelper
             {
                 return;
             }
+
             var screenHeight = DisplayArea.Primary.WorkArea.Height;
             var screenWidth = DisplayArea.Primary.WorkArea.Width;
             var windowHeight = 480;
@@ -48,13 +52,40 @@ namespace ApkHelper
             {
                 windowWidth = screenWidth;
             }
+
             if (windowHeight > screenHeight)
             {
                 windowHeight = screenHeight;
             }
+
             var windowLeft = (screenWidth - windowWidth) / 2;
             var windowTop = (screenHeight - windowHeight) / 2;
             window.MoveAndResize(new RectInt32(windowLeft, windowTop, windowWidth, windowHeight));
+        }
+
+        private void InitWsaHelper()
+        {
+            _wsaHelper = new WsaHelper((error, tag, value) =>
+            {
+                if (error)
+                {
+                    LogError(tag, value);
+                }
+                else
+                {
+                    LogInfo(tag, value);
+                }
+            });
+            if (WsaHelper.CheckWsa())
+            {
+                LogInfo("", "WSA 正在运行");
+            }
+            else
+            {
+                LogError("", "WSA 没有启动");
+            }
+
+            _wsaHelper.CheckAdb();
         }
 
         private AppWindow GetAppWindow()
@@ -64,13 +95,13 @@ namespace ApkHelper
             return AppWindow.GetFromWindowId(windowId);
         }
 
-        public void OnDragOver(object sender, DragEventArgs e)
+        private void OnDragOver(object sender, DragEventArgs e)
         {
             e.AcceptedOperation = DataPackageOperation.Copy;
             e.DragUIOverride.Caption = "安装";
         }
 
-        public async void OnDropAsync(object sender, DragEventArgs e)
+        private async void OnDropAsync(object sender, DragEventArgs e)
         {
             var apkList = await GetDragItemsAsync(e);
             if (apkList.Count < 1)
@@ -79,9 +110,10 @@ namespace ApkHelper
                 UpdateStateToIdel();
                 return;
             }
+
             apkList.ForEach(apk =>
                 _pendingApkList.Add(apk.Path)
-            ) ;
+            );
             Install();
         }
 
@@ -93,88 +125,79 @@ namespace ApkHelper
                 // 不包含文件信息，那么放弃
                 return apkList;
             }
+
             var items = await e.DataView.GetStorageItemsAsync();
             if (items.Count < 1)
             {
                 // 数量不对，那么放弃
                 return apkList;
             }
-            
+
             foreach (var item in items)
             {
                 var attributes = item.Attributes;
-                if (HasAttributes(attributes, FileAttributes.Directory) || HasAttributes(attributes, FileAttributes.LocallyIncomplete))
+                if (HasAttributes(attributes, FileAttributes.Directory) ||
+                    HasAttributes(attributes, FileAttributes.LocallyIncomplete))
                 {
                     continue;
                 }
+
                 var fileName = item.Name;
                 if (fileName.EndsWith(".apk", true, null))
                 {
                     apkList.Add(item);
                 }
             }
+
             return apkList;
         }
 
-        private async void Install()
+        private void Install()
         {
             if (_pendingApkList.Count < 1)
             {
+                UpdateStateToIdel();
                 return;
             }
+
             var apkPath = _pendingApkList[0];
             _pendingApkList.RemoveAt(0);
-            _installCount ++;
+            _installCount++;
             UpdateStateToLoading(_installCount, _installCount + _pendingApkList.Count);
-
-            SendInstallCommand(_installCount, apkPath);
+            // 安装完成一个之后，触发下一个
+            _wsaHelper.SendInstallCommand(_installCount.ToString(), apkPath, Install);
         }
 
-        private async void SendInstallCommand(int taskId, string apkPath)
-        {
-            CommandLineHelper.Create("adb", "install", apkPath)
-                .OnOutput(value => { LogInfo(taskId, value); })
-                .OnError(value => { LogError(taskId, value); })
-                .OnExit(() => { LogInfo(taskId, "结束"); })
-                .Send();
-        }
-        
-        private async void SendWsaCommand()
-        {
-            var wskCommand = "";
-            CommandLineHelper.Create("adb", "install", wskCommand)
-                .OnOutput(value => { LogInfo(0, value); })
-                .OnError(value => { LogError(0, value); })
-                .OnExit(() => { LogInfo(0, "结束"); })
-                .Send();
-        }
-
-        private StringBuilder LogContent(int taskId, string[] value)
+        private StringBuilder LogContent(string tag, string value)
         {
             var builder = new StringBuilder();
             builder.Append(DateTime.Now.ToString("T")).Append(" -> ");
-            if (taskId != 0)
+            if (tag is { Length: > 0 })
             {
-                builder.Append("task:").Append(taskId.ToString()).Append(' ');
+                builder.Append(tag).Append(" => ");
             }
-            foreach (var s in value)
-            {
-                builder.Append(s);
-                builder.Append(' ');
-            }
+
+            if (value is not { Length: > 0 }) return builder;
+            builder.Append(value);
+            builder.Append(' ');
             return builder;
         }
-        
-        private void LogInfo(int taskId, params string[] value)
+
+        private void LogInfo(string tag, string value)
         {
-            var builder = LogContent(taskId, value);
-            LogModel.LogLines.Add(LogLine.Info(builder.ToString()));
+            var builder = LogContent(tag, value);
+            RunUI(() => { LogModel.LogLines.Add(LogLine.Info(builder.ToString())); });
         }
-        
-        private void LogError(int taskId, params string[] value)
+
+        private void LogError(string tag, string value)
         {
-            var builder = LogContent(taskId, value);
-            LogModel.LogLines.Add(LogLine.Error(builder.ToString()));
+            var builder = LogContent(tag, value);
+            RunUI(() => { LogModel.LogLines.Add(LogLine.Error(builder.ToString())); });
+        }
+
+        private void RunUI(DispatcherQueueHandler agileCallback)
+        {
+            DispatcherQueue.TryEnqueue(agileCallback);
         }
 
         private Boolean HasAttributes(FileAttributes attributes, FileAttributes flag) => (attributes & flag) == flag;
@@ -199,6 +222,5 @@ namespace ApkHelper
             ProgressBar.IsIndeterminate = false;
             HintTextView.Text = "正在安装 " + (position + 1) + "/" + all;
         }
-
     }
 }

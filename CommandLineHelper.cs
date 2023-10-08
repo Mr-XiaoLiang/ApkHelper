@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
 namespace ApkHelper
 {
     public class CommandLineHelper
     {
-
-
         public delegate void CmdExitCallback();
+
         public delegate void CmdOutputCallback(string value);
+
         public delegate void CmdErrorCallback(string value);
 
         private event CmdExitCallback CmdExit;
@@ -20,12 +19,15 @@ namespace ApkHelper
         private Process _process = new();
 
         private readonly string _commandInfo;
+        private readonly string _commandTarget;
 
-        private CommandLineHelper(string cmd) {
-            this._commandInfo = cmd;
+        private CommandLineHelper(string target, string cmd)
+        {
+            _commandInfo = cmd;
+            _commandTarget = target;
         }
 
-        public static CommandLineHelper Create(params string[] commands)
+        public static CommandLineHelper Create(string target, params string[] commands)
         {
             var commandBuilder = new StringBuilder();
             foreach (var item in commands)
@@ -33,37 +35,28 @@ namespace ApkHelper
                 commandBuilder.Append(item);
                 commandBuilder.Append(' ');
             }
-            var cmdFinla = commandBuilder.ToString();
-            if (cmdFinla.Length > 0 )
-            {
-                var task = new CommandLineHelper(cmdFinla);
-                return task;
-            } 
-            else
+
+            var cmdFinal = commandBuilder.ToString();
+            if (target.Length <= 0)
             {
                 return null;
             }
+            var task = new CommandLineHelper(target, cmdFinal);
+            return task;
         }
 
         public CommandLineHelper Send()
         {
-            var cmd = _commandInfo;
-            var path = Path.Combine(Environment.SystemDirectory, @"cmd.exe");
-
-            if (!cmd.StartsWith(@"/"))
-            {
-                cmd = @"/c " + cmd;
-            }
-
             var startInfo = new ProcessStartInfo()
             {
-                Arguments = cmd,
-                FileName = path,
+                Arguments = _commandInfo,
+                FileName = _commandTarget,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
             };
 
             _process.StartInfo = startInfo;
@@ -115,7 +108,5 @@ namespace ApkHelper
         {
             CmdExit?.Invoke();
         }
-
     }
-
 }
