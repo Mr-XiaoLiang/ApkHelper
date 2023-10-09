@@ -65,17 +65,19 @@ namespace ApkHelper
 
         private void InitWsaHelper()
         {
-            _wsaHelper = new WsaHelper((error, tag, value) =>
-            {
-                if (error)
+            _wsaHelper = new WsaHelper(
+                this,
+                (error, tag, value) =>
                 {
-                    LogError(tag, value);
-                }
-                else
-                {
-                    LogInfo(tag, value);
-                }
-            });
+                    if (error)
+                    {
+                        LogError(tag, value);
+                    }
+                    else
+                    {
+                        LogInfo(tag, value);
+                    }
+                });
             if (WsaHelper.CheckWsa())
             {
                 LogInfo("", "WSA 正在运行");
@@ -88,7 +90,7 @@ namespace ApkHelper
             _wsaHelper.CheckAdb();
         }
 
-        private AppWindow GetAppWindow()
+        public AppWindow GetAppWindow()
         {
             var windowHandler = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(windowHandler);
@@ -126,7 +128,7 @@ namespace ApkHelper
         {
             LogLine.ShowError = false;
         }
-        
+
         private static async Task<List<IStorageItem>> GetDragItemsAsync(DragEventArgs e)
         {
             var apkList = new List<IStorageItem>();
@@ -221,7 +223,8 @@ namespace ApkHelper
             DispatcherQueue.TryEnqueue(agileCallback);
         }
 
-        private static bool HasAttributes(FileAttributes attributes, FileAttributes flag) => (attributes & flag) == flag;
+        private static bool HasAttributes(FileAttributes attributes, FileAttributes flag) =>
+            (attributes & flag) == flag;
 
         private void UpdateStateToIdle()
         {
@@ -231,7 +234,6 @@ namespace ApkHelper
                 ProgressBar.IsIndeterminate = false;
                 HintTextView.Text = "拖拽 APK 文件到窗口中来安装";
             });
-            
         }
 
         private void UpdateStateToReady()
@@ -242,7 +244,6 @@ namespace ApkHelper
                 ProgressBar.IsIndeterminate = false;
                 HintTextView.Text = "松手释放拖拽的文件来安装";
             });
-            
         }
 
         private void UpdateStateToLoading(int position, int all)
@@ -253,7 +254,6 @@ namespace ApkHelper
                 ProgressBar.IsIndeterminate = false;
                 HintTextView.Text = "正在安装 " + (position) + "/" + all;
             });
-            
         }
     }
 }

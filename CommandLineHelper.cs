@@ -16,7 +16,7 @@ namespace ApkHelper
         private event CmdOutputCallback CmdOutput;
         private event CmdErrorCallback CmdError;
 
-        private Process _process = new();
+        private Process _process;
 
         private readonly string _commandInfo;
         private readonly string _commandTarget;
@@ -41,13 +41,14 @@ namespace ApkHelper
             {
                 return null;
             }
+
             var task = new CommandLineHelper(target, cmdFinal);
             return task;
         }
 
         public CommandLineHelper Send()
         {
-            var startInfo = new ProcessStartInfo()
+            var startInfo = new ProcessStartInfo
             {
                 Arguments = _commandInfo,
                 FileName = _commandTarget,
@@ -58,7 +59,7 @@ namespace ApkHelper
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
             };
-
+            _process = new Process();
             _process.StartInfo = startInfo;
             _process.EnableRaisingEvents = true;
             _process.ErrorDataReceived += OnCmdError;
@@ -72,7 +73,7 @@ namespace ApkHelper
 
         public CommandLineHelper Write(string data)
         {
-            _process.StandardInput.WriteLine(data);
+            _process?.StandardInput.WriteLine(data);
             return this;
         }
 
@@ -101,6 +102,7 @@ namespace ApkHelper
             {
                 return;
             }
+
             CmdError?.Invoke(data);
         }
 
@@ -111,6 +113,7 @@ namespace ApkHelper
             {
                 return;
             }
+
             CmdOutput?.Invoke(data);
         }
 

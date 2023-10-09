@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace ApkHelper;
 
@@ -9,11 +11,13 @@ public class WsaHelper
     public delegate void LogCallback(bool isError, string tag, string value);
 
     private event LogCallback LogCallbackImpl;
+    private readonly Window _window;
 
     private bool _isConnected = false;
 
-    public WsaHelper(LogCallback callback)
+    public WsaHelper(Window window, LogCallback callback)
     {
+        _window = window;
         LogCallbackImpl = callback;
     }
 
@@ -42,10 +46,20 @@ public class WsaHelper
             return true;
         }
 
-        const string tag = "wsa";
-        _isConnected = false;
-        Log(false, tag, "WSA 未启动，尝试启动");
-        Log(true, tag, "请等待Log输出停止后重试");
+        ShowStartWsaDialog();
+        return false;
+    }
+
+    private async void ShowStartWsaDialog()
+    {
+        var result = await App.ShowDialog(
+            window: _window,
+            title: "WSA 未启动",
+            content: "是否尝试启动？某些情况下，启动可能会失败。\n建议手动启动后再尝试安装。",
+            primary: "尝试启动",
+            close: "保持现状"
+        );
+        if (result != ContentDialogResult.Primary) return;
         try
         {
             StartWsa();
@@ -55,11 +69,9 @@ public class WsaHelper
             Console.WriteLine(e);
             if (LogLine.ShowError)
             {
-                Log(true, tag, e.Message);
+                Log(true, "wsa", e.Message);
             }
         }
-
-        return false;
     }
 
     private void ConnectWsa(CommandLineHelper.CmdExitCallback exitCallback)
@@ -93,7 +105,8 @@ public class WsaHelper
 
     private void StartWsa()
     {
-        var tag = "wsa";
+        const string tag = "wsa";
+        Log(false, tag, "正在尝试启动 WSA");
         CommandLineHelper.Create(@"WsaClient", @"/launch", @"wsa://system")
             .OnOutput(value => { Log(false, tag, value); })
             .OnError(value =>

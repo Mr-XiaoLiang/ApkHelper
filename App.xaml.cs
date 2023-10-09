@@ -1,4 +1,7 @@
-﻿using Microsoft.UI.Xaml;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -10,7 +13,7 @@ namespace ApkHelper
     /// </summary>
     public partial class App : Application
     {
-        private Window m_window;
+        private MainWindow m_window;
 
         private static App _app;
 
@@ -45,13 +48,14 @@ namespace ApkHelper
                 rootElement.RequestedTheme = ElementTheme.Dark;
             }
         }
-        
+
         public static ElementTheme CurrentTheme()
         {
             if (_app == null || _app.m_window == null)
             {
                 return ElementTheme.Default;
             }
+
             var uiElement = _app.m_window.Content;
             if (uiElement is FrameworkElement rootElement)
             {
@@ -59,6 +63,27 @@ namespace ApkHelper
             }
 
             return ElementTheme.Default;
+        }
+
+        public static async Task<ContentDialogResult> ShowDialog(
+            Window window,
+            string title,
+            string content,
+            string primary,
+            string close
+        )
+        {
+            var alertDialog = new ContentDialog()
+            {
+                Title = title,
+                Content = content,
+                PrimaryButtonText = primary,
+                CloseButtonText = close,
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = window.Content.XamlRoot,
+            };
+
+            return await alertDialog.ShowAsync();
         }
     }
 }
