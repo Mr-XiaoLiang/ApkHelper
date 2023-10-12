@@ -77,11 +77,15 @@ namespace ApkHelper
             {
                 Title = title,
                 Content = content,
-                PrimaryButtonText = primary,
                 CloseButtonText = close,
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = window.Content.XamlRoot,
             };
+
+            if (!string.IsNullOrEmpty(primary))
+            {
+                alertDialog.PrimaryButtonText = primary;
+            }
 
             return await alertDialog.ShowAsync();
         }
