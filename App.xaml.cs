@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Activation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using LaunchActivatedEventArgs = Microsoft.UI.Xaml.LaunchActivatedEventArgs;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -31,6 +33,7 @@ namespace ApkHelper
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
+        /// https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.application.onlaunched?view=winrt-22621
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             m_window = new MainWindow();
@@ -39,6 +42,26 @@ namespace ApkHelper
             // Hide default title bar.
             m_window.ExtendsContentIntoTitleBar = true;
         }
+
+        // https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.application.onactivated?view=winrt-22621
+        // protected virtual void OnActivated(IActivatedEventArgs args)
+        // {
+        //     
+        // }
+        
+        // https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.application.onfileopenpickeractivated?view=winrt-22621
+        protected virtual void OnFileOpenPickerActivated(FileOpenPickerActivatedEventArgs args)
+        {
+            
+        }
+
+        // https://learn.microsoft.com/zh-cn/uwp/api/windows.ui.xaml.application.onfileactivated?view=winrt-22621
+        protected virtual void OnFileActivated(FileActivatedEventArgs args)
+        {
+            
+        }
+        
+        // https://learn.microsoft.com/zh-cn/previous-versions/windows/apps/hh779669(v=win.10)
 
         private static void SetTheme(Window window)
         {
